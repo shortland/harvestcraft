@@ -127,14 +127,39 @@ public class BlockPamFruitLog extends Block implements IGrowable, PamCropGrowabl
 		}
 
 		super.updateTick(worldIn, pos, state, rand);
+    }
+    
+    // From addons/RightClickHarvesting.java
+	private static void dropItem(ItemStack itemStack, World world, BlockPos pos) {
+		if(world.restoringBlockSnapshots || world.isRemote)
+			return;
+
+		float f = 0.5F;
+		double d0 = (world.rand.nextFloat() * f) + 0.25D;
+		double d1 = (world.rand.nextFloat() * f) + 0.25D;
+		double d2 = (world.rand.nextFloat() * f) + 0.25D;
+
+		final EntityItem entityItem =
+				new EntityItem(world, pos.getX() + d0, pos.getY() + d1, pos.getZ() + d2, itemStack);
+		entityItem.setDefaultPickupDelay();
+		world.spawnEntity(entityItem);
 	}
 
 	private void grow(World worldIn, BlockPos pos, IBlockState state) {
+        final PamCropGrowable blockPamFruit = (PamCropGrowable) blockState.getBlock();
+        final int fortune = 1;
+        final List<ItemStack> drops = blockPamFruit.getDrops(worldIn, pos, state, fortune);
+
 		int i = state.getValue(AGE) + MathHelper.getInt(worldIn.rand, 2, 5);
-		if(i > MATURE_AGE) {
-			i = 2;
-		}
-		worldIn.setBlockState(pos, state.withProperty(AGE, i), 2);
+		if (i > MATURE_AGE) {
+            i = 2;
+
+            for (ItemStack drop : drops) {
+                dropItem(drop, worldIn, pos);
+            }
+        }
+        
+        worldIn.setBlockState(pos, state.withProperty(AGE, i), 2);
 	}
 
 	@Override
